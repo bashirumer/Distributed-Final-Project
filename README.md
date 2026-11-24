@@ -2,7 +2,6 @@
 
 A multi-client, client–server restaurant order management system written in plain Java (sockets + threads, no external dependencies). Waiters take orders, kitchen workers prepare them, and a manager monitors the restaurant — all connected to one central server in real time.
 
-Built as a Distributed Systems final project.
 
 ## Features
 
@@ -20,6 +19,7 @@ Built as a Distributed Systems final project.
 src/
 ├── Server.java           # Socket server, session handling, command routing, dispatch
 ├── Client.java           # Interactive console client for all three roles
+├── GuiClient.java        # Optional Swing GUI client for Waiter, Kitchen, Manager
 ├── Order.java            # Order model (id, food, waiter, status, kitchen)
 ├── OrderManager.java     # Thread-safe order store and business rules
 └── ConcurrencyTest.java  # Automated concurrency tests (run against a live server)
@@ -52,11 +52,38 @@ Start the server first (from `src/`):
 java Server
 ```
 
+### Option A: Console clients
+
 Then open one terminal per user and run:
 
 ```bash
 java Client
 ```
+
+### Option B: Graphical client (Swing)
+
+With the server running, open another terminal in `src/` and run:
+
+```bash
+java GuiClient
+```
+
+The terminal asks **How many users do you want to open?** Enter a number such as `5`. For each user, select Waiter, Kitchen, or Manager and enter the requested ID (`W1`, `W2`, `K1`, `K2`) and the server host (`localhost` if on the same computer). This opens separate GUI windows for the selected users. You can also open clients in separate runs of `java GuiClient`.
+
+The GUI uses the same server and order commands as the console client. Both client interfaces can connect to the same server at the same time. Only one connected automatic kitchen worker can use a particular kitchen ID at once.
+
+The GUI needs a desktop/graphical environment. The server itself can run without a desktop interface.
+
+**Alternative: Compile and run from the project root** (without moving into `src/`):
+
+```bash
+javac src/*.java
+java -cp src Server
+java -cp src Client
+java -cp src GuiClient
+```
+
+Run the server once, and run either client command in a separate terminal. The lines above show the available commands, not four programs that must all be launched in sequence.
 
 Choose a role and ID when prompted:
 
@@ -143,5 +170,9 @@ A PASS/FAIL summary is printed at the end.
 
 ## Limitations
 
-- The client connects to `localhost:5000` (hard-coded).
-- No persistence or authentication — IDs are self-declared.
+- The **console client** connects to `localhost:5000` (hard-coded). The GUI can connect to a specified server host on port 5000.
+- Order records are kept **in server memory only**. Restarting or losing the central server stops all connected clients and loses the stored orders. No database or backup server is provided.
+- Closed kitchen connections are detected and unfinished orders are requeued. The system does **not** detect a silently frozen worker if its socket remains open; there are no heartbeats.
+- There is no employee authentication or encrypted transport. Roles and employee IDs are self-declared and suitable only for this course simulation.
+- Automatic orders are prepared manually by kitchen workers (READY/DONE); cooking durations are not simulated automatically.
+- The concurrency suite tests selected scenarios, not all possible failure cases or performance under heavy load.
